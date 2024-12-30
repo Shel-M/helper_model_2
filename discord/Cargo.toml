@@ -1,0 +1,16 @@
+[package]
+name = "discord"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] } 
+tracing = "0.1"
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["time", "registry"] }
+time = { version = "0.3", features = ["formatting", "macros", "local-offset"] }
+dotenvy = "0.15"
+dotenvy_macro = "0.15"
+tokio = { version = "1", features = ["full"] }
+anyhow = { version = "1.0.94", features = ["backtrace"] }
+async-trait = "0.1.83"
