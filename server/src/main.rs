@@ -1,16 +1,28 @@
+mod api;
 mod config;
+mod user;
 
 use std::{fs::File, sync::Arc};
 
-use axum::{routing::get, Router};
+use axum::{
+    extract::{Path, State},
+    response::IntoResponse,
+    routing::get,
+    Json, Router,
+};
 use chrono::Datelike;
+use sqlx::query_as;
 use tokio::{net::TcpListener, signal, sync::RwLock};
 use tracing::{debug, info};
 
+use crate::{api::user::user_router, user::User};
+
 type DB = sqlx::SqlitePool;
+
 pub struct AppData {
     pub db: DB,
 }
+pub type SharedState = Arc<RwLock<AppData>>;
 
 #[tokio::main]
 async fn main() {
@@ -34,6 +46,7 @@ async fn main() {
     let router = router(AppData { db });
     let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
 
+    debug!("Starting server...");
     axum::serve(listener, router)
         .with_graceful_shutdown(shutdown())
         .await
@@ -46,8 +59,33 @@ fn router(app_data: AppData) -> Router {
     debug!("Creating router");
 
     Router::new()
-        .route("/", get(|| async { "Hello, world!" }))
+        .route("/users", get(users))
+        .route("/delete/{id}", get(delete))
+        .nest("/api/v0/user", user_router())
         .with_state(shared_data)
+}
+
+async fn users(State(shared_state): State<SharedState>) -> Result<Json<Vec<User>>, &'static str> {
+    let db = get_db(shared_state).await;
+
+    let Ok(users) = query_as!(User, "select * from person").fetch_all(&db).await else {
+        return Err("Failed returning user list");
+    };
+
+    Ok(Json(users))
+}
+
+async fn delete(State(app_data): State<SharedState>, Path(id): Path<i64>) -> impl IntoResponse {
+    let db = app_data.read().await.db.clone();
+    let user = User::get_by_id(&db, id).await.expect("Couldn't get users");
+    if let Err(e) = user.delete_ref(&db).await {
+        return format!(
+            "Couldn't delete user '{}' id: {} - {e:?}",
+            user.name, user.id
+        );
+    }
+
+    "Ok!".into()
 }
 
 async fn connect_to_db(config: &config::Config) -> Result<DB, sqlx::Error> {
@@ -66,7 +104,7 @@ async fn connect_to_db(config: &config::Config) -> Result<DB, sqlx::Error> {
 
             let mut filename = config.database.clone();
             if !filename.ends_with(".db") {
-                filename = filename + ".db";
+                filename += ".db";
             }
 
             File::create(filename).expect("Failed to create database file");
@@ -78,6 +116,10 @@ async fn connect_to_db(config: &config::Config) -> Result<DB, sqlx::Error> {
         }
         Err(e) => Err(e),
     }
+}
+
+pub async fn get_db(shared_state: SharedState) -> DB {
+    shared_state.read().await.db.clone()
 }
 
 async fn shutdown() {
@@ -94,9 +136,6 @@ async fn shutdown() {
             .recv()
             .await;
     };
-
-    #[cfg(not(unix))]
-    let terminate = std::future::pending::<()>();
 
     tokio::select! {
         _ = ctrl_c => {},

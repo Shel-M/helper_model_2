@@ -1,0 +1,34 @@
+meta {
+  name: Update User
+  type: http
+  seq: 2
+}
+
+patch {
+  url: http://localhost:8080/api/v0/user
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": 5,
+    "name": "sheldon",
+    "discord_tag": "54321"
+  }
+}
+
+tests {
+  test("should return success", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+   
+  test("should not return server error", function () {
+    expect(res.getStatus()).to.not.equal(500);
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

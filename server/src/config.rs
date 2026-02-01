@@ -21,10 +21,7 @@ impl Config {
     }
 
     pub fn get_db_url(&self) -> String {
-        format!(
-            "sqlite:{}.db",
-            self.database.trim_end_matches('.').to_string()
-        )
+        format!("sqlite:{}.db", self.database.trim_end_matches('.'))
     }
 }
 
@@ -38,9 +35,9 @@ where
 
 #[derive(Debug)]
 pub enum ConfigError {
-    IoError(String),
-    UTF8Error(String),
-    DeserializeError(String),
+    Io(String),
+    UTF8(String),
+    Deserialize(String),
 }
 
 impl Error for ConfigError {}
@@ -48,9 +45,9 @@ impl Error for ConfigError {}
 impl Display for ConfigError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::IoError(s) => write!(f, "Problem reading config file. Inner error: {s}"),
-            Self::UTF8Error(s) => write!(f, "Config file was not valid UTF-8. Inner error: {s}"),
-            Self::DeserializeError(s) => {
+            Self::Io(s) => write!(f, "Problem reading config file. Inner error: {s}"),
+            Self::UTF8(s) => write!(f, "Config file was not valid UTF-8. Inner error: {s}"),
+            Self::Deserialize(s) => {
                 write!(f, "Config file was not valid TOML format. Inner error: {s}")
             }
         }
@@ -59,18 +56,18 @@ impl Display for ConfigError {
 
 impl From<std::io::Error> for ConfigError {
     fn from(value: std::io::Error) -> Self {
-        Self::IoError(value.to_string())
+        Self::Io(value.to_string())
     }
 }
 
 impl From<FromUtf8Error> for ConfigError {
     fn from(value: FromUtf8Error) -> Self {
-        Self::UTF8Error(value.to_string())
+        Self::UTF8(value.to_string())
     }
 }
 
 impl From<toml::de::Error> for ConfigError {
     fn from(value: toml::de::Error) -> Self {
-        Self::DeserializeError(value.to_string())
+        Self::Deserialize(value.to_string())
     }
 }

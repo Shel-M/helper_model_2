@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Helper Mk2",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

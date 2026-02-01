@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::{ArgAction, Parser};
-//use dotenvy::{dotenv, var};
+use dotenvy_macro::dotenv;
 use time::{macros::format_description, UtcOffset};
 use tracing::level_filters::LevelFilter;
 use tracing::{trace, Level};
@@ -70,5 +70,8 @@ async fn main() -> Result<()> {
         .with(console_log);
     tracing::subscriber::set_global_default(logging).expect("Unable to set up logging");
     trace!("Logging setup complete");
+
+    let discord_key = dotenv!("DISCORD_TOKEN");
+
     Ok(())
 }

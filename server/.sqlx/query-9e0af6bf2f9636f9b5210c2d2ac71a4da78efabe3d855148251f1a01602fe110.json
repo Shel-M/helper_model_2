@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "select id, name, discord_tag from person where id = ?1 limit 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "discord_tag",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "9e0af6bf2f9636f9b5210c2d2ac71a4da78efabe3d855148251f1a01602fe110"
+}

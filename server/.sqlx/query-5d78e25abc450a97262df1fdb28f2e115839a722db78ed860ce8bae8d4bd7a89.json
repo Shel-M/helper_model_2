@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "insert into person (name, discord_tag) values (?1, ?2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "5d78e25abc450a97262df1fdb28f2e115839a722db78ed860ce8bae8d4bd7a89"
+}
