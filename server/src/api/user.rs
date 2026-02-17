@@ -33,7 +33,7 @@ pub async fn new_user(
     match user.insert(&db).await {
         Ok(u) => {
             debug!("New user inserted {u:?}");
-            (StatusCode::OK, "".into())
+            (StatusCode::OK, String::new())
         }
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(e).to_string()),
     }

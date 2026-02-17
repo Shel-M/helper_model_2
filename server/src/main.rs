@@ -2,6 +2,9 @@ mod api;
 mod config;
 mod user;
 
+#[cfg(test)]
+mod tests;
+
 use std::{fs::File, sync::Arc};
 
 use axum::{
@@ -25,8 +28,8 @@ pub struct AppData {
 pub type SharedState = Arc<RwLock<AppData>>;
 
 #[tokio::main]
-async fn main() {
-    let config = config::Config::new().unwrap();
+async fn main() -> anyhow::Result<()> {
+    let config = config::Config::new()?;
     tracing_subscriber::fmt()
         .with_max_level(config.log_level)
         .init();
@@ -36,21 +39,26 @@ async fn main() {
     let time = chrono::Utc::now().num_days_from_ce();
     info!("{time}");
 
-    let db = connect_to_db(&config).await.unwrap();
+    let db = connect_to_db(&config).await?;
 
     sqlx::migrate!("./migrations")
         .run(&db)
         .await
         .expect("Failed to run migrations");
 
+    setup_server(db).await
+}
+
+async fn setup_server(db: DB) -> anyhow::Result<()> {
     let router = router(AppData { db });
-    let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
+    let listener = TcpListener::bind("127.0.0.1:8080").await?;
 
     debug!("Starting server...");
     axum::serve(listener, router)
         .with_graceful_shutdown(shutdown())
         .await
         .expect("Could not start server");
+    Ok(())
 }
 
 fn router(app_data: AppData) -> Router {
@@ -103,7 +111,10 @@ async fn connect_to_db(config: &config::Config) -> Result<DB, sqlx::Error> {
             info!("Failed to connect to database, does not exist. Creating...");
 
             let mut filename = config.database.clone();
-            if !filename.ends_with(".db") {
+            if !std::path::Path::new(&filename)
+                .extension()
+                .is_some_and(|ext| ext.eq_ignore_ascii_case("db"))
+            {
                 filename += ".db";
             }
 
@@ -138,7 +149,7 @@ async fn shutdown() {
     };
 
     tokio::select! {
-        _ = ctrl_c => {},
-        _ = terminate => {},
+        () = ctrl_c => {},
+        () = terminate => {},
     };
 }

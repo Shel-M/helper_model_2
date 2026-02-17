@@ -27,7 +27,7 @@ create table assignment (
 	id integer not null, 
 	chore_id integer not null,
 	person_id integer not null,
-	assignment_date datetime not null, -- Naive date, days since 1/1/1 CE via chrono::Utc::now().num_days_from_ce()
+	assigned_date datetime not null, -- Naive date, days since 1/1/1 CE via chrono::Utc::now().num_days_from_ce()
 	reminder_date datetime, -- Naive date, see assignment_date
 	completion_date datetime, -- Naive date, see assignment_date
 	completed_person integer,

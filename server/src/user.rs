@@ -59,7 +59,7 @@ impl User {
 
     pub async fn update(self, db: &crate::DB, update: UpdateUser) -> sqlx::Result<()> {
         // Guard pointless update calls
-        if let (None, None) = (&update.name, &update.discord_tag) {
+        if matches!((&update.name, &update.discord_tag), (None, None)) {
             return Ok(());
         }
 
@@ -127,7 +127,7 @@ pub struct Assignment {
     id: i32,
     chore_id: i32,
     person_id: i32,
-    pub assignment_date: i32,
+    pub assigned_date: i32,
     pub reminder_date: i32,
     pub completion_date: i32,
     completed_person: i32,
